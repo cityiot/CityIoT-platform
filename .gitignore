@@ -1,0 +1,22 @@
+# Don't include files created by python
+*__pycache__*
+
+# Don't include secret environment variables
+env/secrets/*
+
+# Don't include user and service settings for nginx
+secrets/*
+
+# Include the templates for secret environment variables
+!env/secrets/ckan.env.template
+!env/secrets/grafana.env.template
+!env/secrets/postgres.env.template
+!env/secrets/wirecloud.env.template
+
+# Include the templates for user access control management
+!secrets/services_template.conf
+!secrets/users_template.conf
+!secrets/proxy_keys_template.conf
+
+# Include the template for Grafana, Wirecloud and CKAN admin user settings
+!secrets/admins_template.env
