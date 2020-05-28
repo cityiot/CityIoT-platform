@@ -1,0 +1,91 @@
+# Copyright 2020 Tampere University
+# This software was developed as a part of the CityIoT project: https://www.cityiot.fi/english
+# This source code is licensed under the 3-clause BSD license. See license.txt in the repository root directory.
+# Author(s): Ville Heikkilä <ville.heikkila@tuni.fi>
+
+version: '3.5'
+
+services:
+
+  quantumleap:
+    image: smartsdk/quantumleap:${QL_VERSION:-0.7.5}
+    depends_on:
+      - ${CRATE_SERVICE_URI:-cratedb}
+    env_file:
+      - ./env/quantumleap.env
+    entrypoint:
+      - /wait-for-it-for-sh.sh
+      - ${CRATE_SERVICE_URI:-cratedb}:${CRATE_PORT:-4300}
+      - --timeout=${WAIT_FOR_IT_TIMEOUT:-300}
+      - --
+      - python
+      - app.py
+    deploy:
+      replicas: ${QL_REPLICAS:-3}
+      restart_policy:
+        condition: any
+      update_config:
+        parallelism: 1
+        delay: 1m
+    volumes:
+      - type: bind
+        source: ./scripts/wait-for-it.sh
+        target: /wait-for-it.sh
+        read_only: true
+      - type: bind
+        source: ./scripts/wait-for-it-for-sh.sh
+        target: /wait-for-it-for-sh.sh
+        read_only: true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://0.0.0.0:8668/v2/version"]
+      interval: 1m
+      timeout: 30s
+      retries: 3
+    networks:
+      - cityiot
+
+  cratedb:
+    image: crate:${CRATE_VERSION:-3.3.5}
+    # ports:
+      # - 8080:4200  # Admin UI
+    env_file:
+      - ./env/crate.env
+    environment:
+      - NODE_NAME={{.Service.Name}}-{{.Task.Slot}}
+      - UNICAST_HOSTS=${CRATE_SERVICE_URI:-cratedb}
+    command: ["crate",
+        "-Clicense.enterprise=false",
+        "-Cgateway.expected_nodes=${EXPECTED_NODES:-1}",
+        "-Cgateway.recover_after_nodes=${RECOVER_AFTER_NODES:-1}",
+        "-Cgateway.recover_after_time=5m",
+        "-Cdiscovery.zen.minimum_master_nodes=${MINIMUM_MASTER_NODES:-1}",
+        "-Cnode.name=$${NODE_NAME}",
+        "-Cdiscovery.zen.ping.unicast.hosts=$${UNICAST_HOSTS}",
+        "-Cdiscovery.zen.ping_timeout=30s",
+        "-Cnetwork.publish_host=_eth0_",
+        "-Cnetwork.host=0.0.0.0",
+        "-Ccluster.name=quantumleap",
+        "-Chttp.cors.enabled=true",
+        '-Chttp.cors.allow-origin="*"']
+    deploy:
+      endpoint_mode: dnsrr
+      mode: global
+      update_config:
+        parallelism: 1
+        delay: 30s
+    volumes:
+      - cratedata:/data
+    networks:
+      - cityiot
+
+volumes:
+  # External true ensures that the volume is not re-created if already present
+  cratedata:
+    external: true
+    name: crate_data
+
+networks:
+  cityiot:
+    driver: overlay
+    external: true
+    name: ${CITYIOT_NETWORK_NAME:-cityiot}

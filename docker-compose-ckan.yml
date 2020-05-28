@@ -1,0 +1,88 @@
+# Copyright 2020 Tampere University
+# This software was developed as a part of the CityIoT project: https://www.cityiot.fi/english
+# This source code is licensed under the 3-clause BSD license. See license.txt in the repository root directory.
+# Author(s): Ville Heikkila <ville.heikkila@tuni.fi>
+
+version: "3.5"
+
+services:
+
+  ckan:
+    image: ${CKAN_EXTENDED_IMAGE:-fiware/ckan-extended:2.8-7.7}
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+    env_file:
+      - env/ckan.env
+      - env/secrets/ckan.env
+    depends_on:
+      - ${UTIL_STACK_NAME:-util}_${POSTGRES_SERVICE_URI:-postgresdb}
+      - ${CKAN_SOLR_SERVICE_URI:-ckan_solr}
+      - ${UTIL_STACK_NAME:-util}_${REDIS_SERVICE_URI:-redis}
+    # uncomment the following when not using subdomains
+    # ports:
+    #   - target: ${CKAN_PORT:-5000}
+    #     published: ${CKAN_PORT:-5000}
+    #     mode: host
+    #     protocol: tcp
+    entrypoint:
+      - /wait-for-it.sh
+      - ${POSTGRES_SERVICE_URI:-postgresdb}:${POSTGRES_PORT:-5432}
+      - --timeout=${WAIT_FOR_IT_TIMEOUT:-300}
+      - --
+      - /wait-for-it.sh
+      - ${CKAN_SOLR_SERVICE_URI:-ckan_solr}:${CKAN_SOLR_PORT:-8983}
+      - --timeout=${WAIT_FOR_IT_TIMEOUT:-300}
+      - --
+      - /wait-for-it.sh
+      - ${REDIS_SERVICE_URI:-redis}:${REDIS_PORT:-6379}
+      - --timeout=${WAIT_FOR_IT_TIMEOUT:-300}
+      - --
+      # - /entrypoint.sh sh -c 'sed -i -e  localhost /etc/apache2/apache2.conf && /entrypoint.sh'
+      - /entrypoint.sh
+    volumes:
+      - ckan_config:/etc/ckan
+      - ckan_home:/usr/lib/ckan
+      - ckan_storage:/var/lib/ckan
+      - type: bind
+        source: ./scripts/wait-for-it.sh
+        target: /wait-for-it.sh
+        read_only: true
+    networks:
+      - cityiot
+
+  ckan_datapusher:
+    image: ${CKAN_DATAPUSHER_IMAGE:-clementmouchet/datapusher:latest}
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+    networks:
+      - cityiot
+
+  ckan_solr:
+    image: ${CKAN_SOLR_IMAGE:-ckan/solr:latest}
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+    volumes:
+      - solr_data:/opt/solr/server/solr/ckan/data
+    networks:
+      - cityiot
+
+volumes:
+  ckan_config:
+    name: ckan_config
+  ckan_home:
+    name: ckan_home
+  ckan_storage:
+    name: ckan_storage
+  solr_data:
+    name: solr_data
+
+networks:
+  cityiot:
+    external: true
+    name: ${CITYIOT_NETWORK_NAME:-cityiot}

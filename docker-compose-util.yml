@@ -1,0 +1,81 @@
+# Copyright 2020 Tampere University
+# This software was developed as a part of the CityIoT project: https://www.cityiot.fi/english
+# This source code is licensed under the 3-clause BSD license. See license.txt in the repository root directory.
+# Author(s): Ville Heikkilä <ville.heikkila@tuni.fi>
+
+version: '3.5'
+
+services:
+
+  postgresdb:
+    image: postgres:${POSTGRES_VERSION:-9.6.16}
+    env_file:
+      - ./env/secrets/postgres.env
+    deploy:
+      mode: global
+      restart_policy:
+        condition: any
+      update_config:
+        parallelism: 1
+        delay: 1m
+    volumes:
+      - ./scripts/pg-init-scripts:/docker-entrypoint-initdb.d
+      - postgresdata:/var/lib/postgresql/data
+    networks:
+      - cityiot
+
+  elasticsearch:
+    image: elasticsearch:${ELASTICSEARCH_VERSION:-2.4}
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      update_config:
+        parallelism: 1
+    volumes:
+      - elasticsearchdata:/usr/share/elasticsearch/data
+    command: elasticsearch -Des.index.max_result_window=50000
+    networks:
+      - cityiot
+
+  memcached:
+    image: memcached:${MEMCACHED_VERSION:-1.5.12}
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      update_config:
+        parallelism: 1
+    command: memcached -m 2048m
+    networks:
+      - cityiot
+
+  redis:
+    image: redis:${REDIS_VERSION:-5.0.7}
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      update_config:
+        parallelism: 1
+    volumes:
+      - redisdata:/data
+    networks:
+      - cityiot
+
+volumes:
+  postgresdata:
+    external: true
+    name: postgres_data
+  elasticsearchdata:
+    external: true
+    name: elasticsearch_data
+  redisdata:
+    external: true
+    name: redis_data
+
+networks:
+  cityiot:
+    driver: overlay
+    external: true
+    name: ${CITYIOT_NETWORK_NAME:-cityiot}

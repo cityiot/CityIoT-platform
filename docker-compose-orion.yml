@@ -1,0 +1,57 @@
+# Copyright 2020 Tampere University
+# This software was developed as a part of the CityIoT project: https://www.cityiot.fi/english
+# This source code is licensed under the 3-clause BSD license. See license.txt in the repository root directory.
+# Author(s): Ville Heikkilä <ville.heikkila@tuni.fi>
+
+version: '3.5'
+
+services:
+
+  orion:
+    image: fiware/orion:${ORION_VERSION:-2.3.0}
+    depends_on:
+      - ${MONGO_STACK_NAME:-mongo-rs}_${MONGO_SERVICE_URI:-mongodb}
+    entrypoint:
+      - /wait-for-it.sh
+      - ${MONGO_SERVICE_URI:-mongodb}:${MONGO_PORT:-27017}
+      - --timeout=${WAIT_FOR_IT_TIMEOUT:-300}
+      - --
+      - /usr/bin/contextBroker
+      - -fg
+      - -multiservice
+      - -ngsiv1Autocast
+      - -logLevel
+      - ${ORION_LOG_LEVEL:-WARN}
+      - -dbhost
+      - ${MONGO_SERVICE_URI:-mongodb}
+      - -rplSet
+      - ${REPLICASET_NAME:-rs}
+      - -dbTimeout
+      - ${ORION_DB_TIMEOUT:-20000}
+      - -httpTimeout
+      - ${ORION_HTTP_TIMEOUT:-45000}
+    deploy:
+      replicas: ${ORION_REPLICAS:-5}
+      restart_policy:
+        condition: any
+      update_config:
+        parallelism: 1
+        delay: 1m
+    volumes:
+      - type: bind
+        source: ./scripts/wait-for-it.sh
+        target: /wait-for-it.sh
+        read_only: true
+    networks:
+      - cityiot
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://0.0.0.0:1026/version"]
+      interval: 1m
+      timeout: 15s
+      retries: 3
+
+networks:
+  cityiot:
+    driver: overlay
+    external: true
+    name: ${CITYIOT_NETWORK_NAME:-cityiot}

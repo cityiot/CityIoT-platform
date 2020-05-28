@@ -1,0 +1,54 @@
+# Copyright 2020 Tampere University
+# This software was developed as a part of the CityIoT project: https://www.cityiot.fi/english
+# This source code is licensed under the 3-clause BSD license. See license.txt in the repository root directory.
+# Author(s): Ville Heikkilä <ville.heikkila@tuni.fi>
+
+version: '3.5'
+
+services:
+
+  iotagent-ul:
+    image: fiware/iotagent-ul:${IOTAGENT_UL_VERSION:-1.12.0}
+    env_file:
+      - ./env/iotagent.env
+    depends_on:
+      - ${MONGO_STACK_NAME:-mongo-rs}_${MONGO_SERVICE_URI:-mongodb}
+    # entrypoint:
+    #   - /wait-for-it.sh
+    #   - ${MONGO_SERVICE_URI:-mongodb}:${MONGO_PORT:-27017}
+    #   - --timeout=${WAIT_FOR_IT_TIMEOUT:-300}
+    #   - --
+    #   - bin/iotagent-ul
+    #   - config.js
+    deploy:
+      replicas: ${IOTAGENT_UL_REPLICAS:-2}
+      restart_policy:
+        condition: any
+      update_config:
+        parallelism: 1
+        delay: 1m
+    configs:
+      - source: iotagent-ul-config
+        target: /opt/iotaul/config.js
+    # volumes:
+    #   - type: bind
+    #     source: ./scripts/wait-for-it.sh
+    #     target: /wait-for-it.sh
+    #     read_only: true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://0.0.0.0:${IOTA_NORTH_PORT:-4061}/version"]
+      interval: 1m
+      timeout: 30s
+      retries: 3
+    networks:
+      - cityiot
+
+configs:
+  iotagent-ul-config:
+    file: ./scripts/iotagent-ul-config.js
+
+networks:
+  cityiot:
+    driver: overlay
+    external: true
+    name: ${CITYIOT_NETWORK_NAME:-cityiot}
