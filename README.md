@@ -96,7 +96,7 @@ The main deployment options can be found in the file [`main_settings.env`](./mai
 - `FIWARE_USE_SUBDOMAINS`
   - If set to `true`, the data usage services Grafana, Wirecloud, and CKAN are all served on their own subdomains, e.g. `https://grafana.<DOMAIN_NAME>`. Otherwise, these services are served on dedicated ports: Grafana on port 3000, Wirecloud on port 8000, and CKAN on port 5000.
 - `DOMAIN_NAME`
-  - This is the domain name on which the platform will be deployed on. It can be domain name of the server or an IP address. If using an IP address, the HTTPS protocol and the subdomains chosen in the previous options are not available.
+  - This is the domain name on which the platform will be deployed on. It can be the domain name of the server or an IP address. Even `localhost` or `127.0.0.1` is possible, if the intention is to just test the platform on a local machine. If using an IP address, the HTTPS protocol and the subdomains chosen in the previous options are not available.
 - `ORION_VERSION`
   - Setting to choose Orion Context Broker version.
 - `ORION_REPLICAS`
@@ -123,6 +123,58 @@ The main deployment options can be found in the file [`main_settings.env`](./mai
   - Setting to choose whether to include CKAN on the platform. If `true`, CKAN will be included, otherwise not.
 
 ### Choosing the database settings (step 2)
+
+This step involves choosing the main database and the admin user as well as the names of the PostgreSQL databases, usernames for the databases, and the passwords for the users with regards to Grafana, Wirecloud, and CKAN. Thus, this step is not absolutely necessary if none of the three services are included in the platform. This step can also be skipped if the deployer wants to use the default values for the names and passwords (this is NOT recommended).
+
+The database settings for the main database, Grafana, Wirecloud, and CKAN can be chosen by editing the files `env/secrets/postgres.env`, `env/secrets/grafana.env`, `env/secrets/wirecloud.env`, and `env/secrets/ckan.env`. If these files do not exists yet, they can be created with the default values by running the helper script
+
+```bash
+source create_default_files.sh
+```
+
+This script does not change anything about any existing files, and thus it is save to run even after some of the settings have been edited. It is also run during the step 6 to create any missing files if the deployer has skipped any of the previous steps.
+
+The options in `env/secrets/postgres.env`:
+
+- `POSTGRES_DB`
+  - The main database name for the PostgreSQL.
+- `POSTGRES_USER`
+  - The admin username for the PostgreSQL.
+- `POSTGRES_PASSWORD`
+  - The password for the admin user for the PostgreSQL.
+
+The options in `env/secrets/grafana.env`:
+
+- `GF_DATABASE_NAME`
+  - The PostgreSQL database name for Grafana.
+- `GF_DATABASE_USER`
+  - The PostgreSQL database username for Grafana.
+- `GF_DATABASE_PASSWORD`
+  - The password for the Grafana user for the PostgreSQL database.
+
+The options in `env/secrets/wirecloud.env`:
+
+- `DB_NAME`
+  - The PostgreSQL database name for Wirecloud.
+- `DB_USERNAME`
+  - The PostgreSQL database username for Wirecloud.
+- `DB_PASSWORD`
+  - The password for the Wirecloud user for the PostgreSQL database.
+
+The options in `env/secrets/ckan.env`:
+
+- `CKAN_POSTGRES_DB`
+  - The PostgreSQL database name for CKAN.
+- `CKAN_POSTGRES_USER`
+  - The PostgreSQL database username for CKAN.
+- `CKAN_POSTGRES_PASSWORD`
+  - The password for the CKAN user for the PostgreSQL database.
+- `DATASTORE_POSTGRES_DB`
+  - The PostgreSQL database name for read-only database for CKAN.
+- `DATASTORE_POSTGRES_USER`
+  - The PostgreSQL database username for read-only database for CKAN.
+- `DATASTORE_POSTGRES_PASSWORD`
+  - The password for the read-only CKAN user for corresponding the PostgreSQL database.
 
 ### Choosing the admin usernames and passwords (step 3)
 
