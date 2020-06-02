@@ -21,9 +21,7 @@ Table of Contents
     - [Orion Context Broker](#orion-context-broker)
     - [QuantumLeap](#quantumleap)
     - [IoT Agent for the Ultralight 2.0](#iot-agent-for-the-ultralight-20)
-    - [Grafana](#grafana)
-    - [Wirecloud](#wirecloud)
-    - [CKAN](#ckan)
+    - [Grafana, Wirecloud, and CKAN](#grafana-wirecloud-and-ckan)
   - [Platform management](#platform-management)
     - [Updating deployment options](#updating-deployment-options)
     - [Updating Nginx access control permissions](#updating-nginx-access-control-permissions)
@@ -124,9 +122,9 @@ The main deployment options can be found in the file [`main_settings.env`](./mai
 
 ### Choosing the database settings (step 2)
 
-This step involves choosing the main database and the admin user as well as the names of the PostgreSQL databases, usernames for the databases, and the passwords for the users with regards to Grafana, Wirecloud, and CKAN. Thus, this step is not absolutely necessary if none of the three services are included in the platform. This step can also be skipped if the deployer wants to use the default values for the names and passwords (this is NOT recommended).
+This step involves choosing the main database and the admin user as well as the names of the PostgreSQL databases, usernames for the databases, and the passwords for the users with regards to Grafana, Wirecloud, and CKAN. Thus, this step is not absolutely necessary if none of the three services are included in the platform. This step can also be skipped if the deployer wants to use the default values for the names and passwords (this is NOT recommended practice). Note however, that these usernames and passwords are not the ones used with web applications, those usernames are chosen in the next step (step 3).
 
-The database settings for the main database, Grafana, Wirecloud, and CKAN can be chosen by editing the files `env/secrets/postgres.env`, `env/secrets/grafana.env`, `env/secrets/wirecloud.env`, and `env/secrets/ckan.env`. If these files do not exists yet, they can be created with the default values by running the helper script
+The database settings for the main database, Grafana, Wirecloud, and CKAN can be chosen by editing the files `env/secrets/postgres.env`, `env/secrets/grafana.env`, `env/secrets/wirecloud.env`, and `env/secrets/ckan.env`. If these files do not exists yet, they can be created with the default values by running the helper script.
 
 ```bash
 source create_default_files.sh
@@ -178,15 +176,92 @@ The options in `env/secrets/ckan.env`:
 
 ### Choosing the admin usernames and passwords (step 3)
 
+This step involves choosing the admin usernames for Grafana, Wirecloud, and CKAN. The actual admin accounts are created for Grafana during step 6 and for Wirecloud and CKAN during step 7. These admin accounts can be used to access the applications and to create any additional user accounts that are needed for the applications.
+
+For Grafana and CKAN also the passwords for the admin users are chosen here. For Wirecloud the password is chosen interactively when the admin account is created in step 7. This step can be skipped if the deployer wants to use the default values for the usernames and passwords (this is definitely NOT recommended in any production environment).
+
+These settings are found in the file `secrets/admins.env`. If this file does not exist yet, it can be created with the default values by running the helper script.
+
+```bash
+source create_default_files.sh
+```
+
+The options in `secrets/admins.env`:
+
+- `GRAFANA_ADMIN_USER`
+  - The username for the admin user for Grafana.
+- `GRAFANA_ADMIN_PASSWORD`
+  - The password for the admin user for Grafana.
+- `WIRECLOUD_ADMIN_USER`
+  - The username for the admin user for Wirecloud.
+- `CKAN_ADMIN_USER`
+  - The username for the admin user for CKAN.
+- `CKAN_ADMIN_PASSWORD`
+  - The password for the admin user for CKAN.
+
 ### Setting the Nginx access control permission (step 4)
+
+The access control for the FIWARE core components, Orion and QuantumLeap as well as the IoT Agent for Ultralight, is handled by the Nginx server. More information on how the access control system works can be found from the [platform document](https://drive.google.com/file/d/1yueGrdArlFmz8ZzchTXWuhbgC9dKUuGN) on chapter 3.3. The permissions for the users of the platform are modified by editing three Nginx configuration files: `secrets/users.conf`, `secrets/services.conf`, and `secrets/proxy_keys.conf`. Any modified access permission will come to effect when the Nginx server is next restarted. On the first install of the platform this happens as the last part of the step 6. Section [Updating Nginx access control permissions](#updating-nginx-access-control-permissions) contains information on how to update the access control rules when the platform is already running. If the configuration files do not exists yet, they can be created with empty permission by running the helper script.
+
+```bash
+source create_default_files.sh
+```
+
+Users and their tokens are modified by modifying the file `secrets/users.conf`. The template file [`users_template.conf`](secrets/users_template.conf) contains examples on the format of the file. The lines
+
+```bash
+    # example users
+    'abcdef'         data-provider;
+    '123456'         data-viewer;
+```
+
+create two users: user called `data-provider`, whose token is `abcdef`, and user `data-viewer`, whose token is `123456`. Note the semicolon at the end of each line. Do not edit the default or intruder users. The tokens are used by providing them as the value of the HTTP header `apikey`. See section [Orion usage examples](#orion-context-broker) for examples of using the tokens.
+
+The permissions for each users are given in the file `secrets/services.conf`. The template file [`services_template.conf`](secrets/services_template.conf) contain examples on the format of the file. The lines
+
+```bash
+    # give the data-provider write-access to the service "example"
+    data-provider:example         write-access;
+
+    # give the data-provider read-access to all services
+    '~^data-provider:(.)*'        read-access;
+
+    # give the data-viewer read access to the service "example"
+    data-viewer:example           read-access;
+```
+
+gives the user `data-provider` both read and write access to the FIWARE service `example` and read access (GET queries) to all FIWARE services. The user `data-viewer` is only given read access to the FIWARE service `example` and no access to any other FIWARE service. Note the colons between the users and services as well as the semicolons at the end of each line. The second rule gives an example on how to regex with the service names. The access control rules are handled by Nginx line by line in order and the first matching rule is the one that is used.
+
+The file `secrets/proxy_keys.conf` is used to setup the external token modification for the `/notify` endpoint. If no external data sources or this endpoint are in use this last part of step 4 can be skipped.
+
+The external tokens can be used to increase the platform security when using external data sources for the Orion Context Broker by avoiding putting actual CityIoT platform tokens on any external data source. The external tokens are used by the HTTP header `platform-apikey` and they are HTTP request method dependent. The template file [`secrets/proxy_keys_template.conf`](secrets/proxy_keys_template.conf) contains an example on the format of the file. The line
+
+```bash
+    'POST:external_token'   'apikey_token';
+```
+
+means that, when the `/notify` endpoint is used with a POST request and the value `external_token` for the HTTP header `platform-apikey`, the request is forwarded to the Orion Context Broker (to the endpoint `/v2/op/notify`) with `apikey_token` as the value of the HTTP header `apikey`.
 
 ### Getting the SSL certificate (step 5)
 
 ### Installing the platform (step 6)
 
+```bash
+./start_fiware.sh
+```
+
 ### Adding admin user to Wirecloud and CKAN (step 7)
 
+```bash
+./create_fiware_admin.sh
+./create_ckan_admin.sh
+```
+
 ### Uninstalling the platform
+
+```bash
+./stop_fiware.sh
+```
 
 ## Platform usage instructions
 
@@ -196,11 +271,7 @@ The options in `env/secrets/ckan.env`:
 
 ### IoT Agent for the Ultralight 2.0
 
-### Grafana
-
-### Wirecloud
-
-### CKAN
+### Grafana, Wirecloud, and CKAN
 
 ## Platform management
 
