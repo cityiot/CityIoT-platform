@@ -65,7 +65,7 @@ then
     sed -i "/GRAFANA_ADMIN_PASSWORD/c\GRAFANA_ADMIN_PASSWORD=admin" $current_env_file
     sed -i "/WIRECLOUD_ADMIN_USER/c\WIRECLOUD_ADMIN_USER=admin" $current_env_file
     sed -i "/CKAN_ADMIN_USER/c\CKAN_ADMIN_USER=admin" $current_env_file
-    sed -i "/CKAN_ADMIN_PASSWORD/c\CKAN_ADMIN_PASSWORD=admin" $current_env_file
+    sed -i "/CKAN_ADMIN_PASSWORD/c\CKAN_ADMIN_PASSWORD=admin123" $current_env_file
 fi
 
 # Create Nginx configuration file for FIWARE users.
