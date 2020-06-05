@@ -564,4 +564,6 @@ Grafana can be used to connect directly to the database used by QuantumLeap. See
 
 ### Backing and restoring data
 
+Backups for the data that is stored using the CityIoT FIWARE platform can be created using the tool at [tools/backup/](tools/backup). The backups will be stored as 7-Zip compressed files and the tool also contains helper scripts to restore the data from the backups to the FIWARE platform.
+
 ### Memory issue with Orion
