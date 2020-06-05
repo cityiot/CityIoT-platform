@@ -45,30 +45,30 @@ A FIWARE service based access control is also handled by the Nginx server.
 Available services (only Orion is a mandatory part of a FIWARE platform, all other services are optional but are included by default in the CityIoT FIWARE platform):
 
 - [Orion Context Broker](https://fiware-orion.rtfd.io/) (version 2.3.0)
-    - The core FIWARE Generic Enabler that provides [FIWARE NGSIv2 API](http://fiware.github.io/specifications/ngsiv2/stable/).
-    - Uses Mongo database to store the data.
-    - Uses FIWARE service based access control (provided by the custom Nginx server rules).
-    - By default 5 replicas are running at the same time to provide better availability and performance.
+  - The core FIWARE Generic Enabler that provides [FIWARE NGSIv2 API](http://fiware.github.io/specifications/ngsiv2/stable/).
+  - Uses Mongo database to store the data.
+  - Uses FIWARE service based access control (provided by the custom Nginx server rules).
+  - By default 5 replicas are running at the same time to provide better availability and performance.
 - [QuantumLeap](https://quantumleap.rtfd.io/) (version 0.7.5)
-    - FIWARE Generic Enabler that supports the storage of FIWARE NGSIv2 data into a time series database, and provides an [API](https://app.swaggerhub.com/apis/smartsdk/ngsi-tsdb/0.7) for accessing the stored data.
-    - Normally used to store any changed attribute values according to the subscriptions made to Orion.
-    - Uses Crate database to store the data.
-    - Uses FIWARE service based access control (provided by the custom Nginx server rules).
-    - By default 3 replicas are running at the same time to provide more availability and performance.
+  - FIWARE Generic Enabler that supports the storage of FIWARE NGSIv2 data into a time series database, and provides an [API](https://app.swaggerhub.com/apis/smartsdk/ngsi-tsdb/0.7) for accessing the stored data.
+  - Normally used to store any changed attribute values according to the subscriptions made to Orion.
+  - Uses Crate database to store the data.
+  - Uses FIWARE service based access control (provided by the custom Nginx server rules).
+  - By default 3 replicas are running at the same time to provide more availability and performance.
 - [Grafana](https://grafana.com/) (version 6.5.3)
-    - Open source software for time series analytics and visualization.
-    - Uses its own user management system that is independent of the access control management provided by Nginx.
-    - Can connect directly to the Crate database used by QuantumLeap.
-    - Stores user created data (settings, dashboards, etc.) to a PostgreSQL database.
+  - Open source software for time series analytics and visualization.
+  - Uses its own user management system that is independent of the access control management provided by Nginx.
+  - Can connect directly to the Crate database used by QuantumLeap.
+  - Stores user created data (settings, dashboards, etc.) to a PostgreSQL database.
 - [Wirecloud](https://wirecloud.rtfd.io/) (version 1.3)
-    - FIWARE Generic Enabler that provides a web mashup platform that can be used to develop operational dashboards which are highly customizable by end users.
-    - Uses its own user management system that is independent of the access control management provided by Nginx.
-    - Stores user created data (settings, dashboards, etc.) to PostgreSQL database.
+  - FIWARE Generic Enabler that provides a web mashup platform that can be used to develop operational dashboards which are highly customizable by end users.
+  - Uses its own user management system that is independent of the access control management provided by Nginx.
+  - Stores user created data (settings, dashboards, etc.) to PostgreSQL database.
 - [CKAN](https://ckan.org/) (version 2.8) with [FIWARE CKAN extensions](https://fiware-ckan-extensions.rtfd.io/)
-    - CKAN is open source data management system that can be used to publish and share data.
-    - FIWARE CKAN extensions provide support for publication of datasets matching FIWARE NGSI format.
-    - Uses its own user management system that is independent of the access control management provided by Nginx.
-    - Stores user created data (settings, dataset information, etc.) to PostgreSQL database.
+  - CKAN is open source data management system that can be used to publish and share data.
+  - FIWARE CKAN extensions provide support for publication of datasets matching FIWARE NGSI format.
+  - Uses its own user management system that is independent of the access control management provided by Nginx.
+  - Stores user created data (settings, dataset information, etc.) to PostgreSQL database.
 
 ## Deployment instructions
 
@@ -79,6 +79,7 @@ This section contains instructions on how to setup a new CityIoT FIWARE platform
 The platform has been tested on Ubuntu 18.04.3 LTS operating system.
 
 Required software:
+
 - [Bash Shell](https://www.gnu.org/software/bash/) (tested with version 4.4.20)
 - [Docker Engine](https://docs.docker.com/engine/install/ubuntu/) (tested with version 19.03.5)
 - [Docker Compose](https://docs.docker.com/compose/install/) (tested with version 1.25.1)
@@ -299,7 +300,7 @@ n8dlhqmczecd        nginx_nginx                               global            
 
 For example, the numbers 5/5 for Orion means that all 5 replicated Orion containers indicate that they are ready. And the numbers 1/1 for the Nginx server indicate that the platform should be ready for use. Possible problems can be checked by using the command `docker service logs <service_name>`.
 
-Once all the services are running, the index page can be located at the address: `http://<host>`, where host is the domain name given in the main_settings.env.
+Once all the services are running, the index page can be located at the address: `http://<host>`, where `<host>` is the domain name given in the main_settings.env.
 
 ### Adding admin user to Wirecloud and CKAN (step 7)
 
@@ -333,13 +334,223 @@ This does not remove any data stored in any of the databases, the data will be s
 
 ## Platform usage instructions
 
+This section provides examples on how to use APIs of the FIWARE components. The examples assume that the platform has already been deployed and they can be used to test whether the FIWARE components are working properly.
+
+The available platform components are shown as list, when accessing the address `http://<host>`, where `<host>` is the domain name given in the `main_settings.env`. Note, that the index web page always shows all the components even if not all of them were selected during deployment, e.g. Wirecloud links will be shown on the page even if Wirecloud was not installed.
+
 ### Orion Context Broker
 
+On the CityIoT FIWARE platform, the FIWARE-NGSI v2 API provided by the Orion Context Broker can be accessed at the address `http://<host>/orion/`, where `<host>` is the domain name given in the `main_settings.env`. Some general API documentation is listed below:
+
+- [The API specification](http://telefonicaid.github.io/fiware-orion/api/v2/stable/)
+- [API walkthrough](https://fiware-orion.readthedocs.io/en/latest/user/walkthrough_apiv2/index.html) at the Orion documentation page
+- [FIWARE step-by-step](https://fiware-tutorials.readthedocs.io/en/latest/getting-started/index.html) for the Orion Context Broker
+
+For the CityIoT platform also has an access control system that requires the users of the platform to include their token as the value of the HTTP header `apikey` whenever the API is used. In all examples below `<host>` should be replaced by the actual domain name and `<token>` by the token of the user. All examples use the HTTPS address for the platform, and should be replaced with the HTTP addresses if HTTPS is not available.
+
+Without a token, only the version number for Orion can be checked:
+
+```bash
+curl --silent --location --request GET "https://<host>/orion/version/"
+```
+
+All other queries return status code 401 if the user did not provide a token or the user did not have permission to for the tried operation. Section [Updating Nginx access control permissions](#updating-nginx-access-control-permissions) provides instructions on how to modify the access control rules.
+
+To list the first 10 entities from a selected FIWARE service (`<fiware-service>`) at a selected FIWARE service path (`<fiware-servicepath>`):
+
+```bash
+curl --silent --show-error --location \
+    --request GET \
+    --header "fiware-service: <fiware-service>" \
+    --header "fiware-servicepath: <fiware-servicepath>" \
+    --header "apikey: <token>" \
+    "https://<host>/orion/v2/entities?limit=10" \
+| json_pp
+```
+
+If you get error message, add `--include` flag to the curl command and remove the "`| json_pp`" part to see more information about the error.
+
+To send a new entity (`<entity_id>`) with a selected entity type (`<entity_type>`)) to Orion:
+
+```bash
+curl --silent --show-error --location --include \
+    --request POST \
+    --header "Content-Type: application/json" \
+    --header "fiware-service: <fiware-service>" \
+    --header "fiware-servicepath: <fiware-servicepath>" \
+    --header "apikey: <token>" \
+    "https://<host>/orion/v2/entities" \
+    --data @- << EOF
+{
+    "id": "<entity_id>",
+    "type": "<entity_type>",
+    "description": {
+        "type": "Text",
+        "value": "Example data"
+    },
+    "temperature": {
+        "type": "Number",
+        "value": 25
+    }
+}
+EOF
+```
+
+To update the value of the temperature for the previously created entity:
+
+```bash
+curl --silent --show-error --location --include \
+    --request PATCH \
+    --header "Content-Type: application/json" \
+    --header "fiware-service: <fiware-service>" \
+    --header "fiware-servicepath: <fiware-servicepath>" \
+    --header "apikey: <token>" \
+    --data '{"temperature": 28}' \
+    "https://<host>/orion/v2/entities/<entity_id>/attrs?options=keyValues"
+```
+
+To check that the new entity was correctly created and display all attributes including the automatically created dateModified attribute:
+
+```bash
+curl --silent --show-error --location \
+    --request GET \
+    --header "fiware-service: <fiware-service>" \
+    --header "fiware-servicepath: <fiware-servicepath>" \
+    --header "apikey: <token>" \
+    "https://<host>/orion/v2/entities/<entity_id>\
+?type=<entity_type>\
+&attrs=*,dateModified\
+&metadata=*,dateModified" \
+| json_pp
+```
+
+Note that the Nginx server provides a cache for the FIWARE platform and it might take up to 60 seconds before any changes on Orion are visible through the API.
+
 ### QuantumLeap
+
+On the CityIoT FIWARE platform, the API provided by QuantumLeap can be accessed at the address `http://<host>/quantumleap/`, where `<host>` is the domain name given in the `main_settings.env`. Some general API documentation is listed below:
+
+- [The API specification](https://app.swaggerhub.com/apis/smartsdk/ngsi-tsdb/0.7) on Swagger
+- [API walkthrough](https://quantumleap.readthedocs.io/en/latest/user/) at the QuantumLeap documentation page
+
+For the CityIoT platform the access control system works similarly with QuantumLeap as with Orion. In all examples below `<host>` should be replaced by the actual domain name and `<token>` by the token of the user. All examples use the HTTP protocol and by default all calls with HTTP are redirected to HTTPS if it is available.
+
+Without a token, only the version number for QuantumLeap can be checked:
+
+```bash
+curl --silent --location --request GET "https://<host>/quantumleap/version/"
+```
+
+All other queries return status code 401 if the user did not provide a token or the user did not have permission to for the tried operation. Section [Updating Nginx access control permissions](#updating-nginx-access-control-permissions) provides instructions on how to modify the access control rules.
+
+For QuantumLeap to get the data updates send to Orion, QuantumLeap must be subscribed to the updates. This is done by creating a subscription to Orion. Below is an example for a creating a subscription that causes Orion to send a notification message to QuantumLeap whenever the temperature attribute in any of the entities of type `<entity_type>` are updated. The notification message will containing all the attributes for the entity in question.
+
+```bash
+curl --silent --show-error --location --include \
+    --request POST \
+    --header "Content-Type: application/json" \
+    --header "fiware-service: <fiware-service>" \
+    --header "fiware-servicepath: <fiware-servicepath>" \
+    --header "apikey: <token>" \
+    "https://<host>/orion/v2/subscriptions" \
+    --data @- << EOF
+{
+    "description": "Example subscription",
+    "subject": {
+        "entities": [
+            {
+                "idPattern": ".*",
+                "type": "<entity_type>"
+            }
+        ],
+        "condition": {
+            "attrs": [
+                "temperature"
+            ]
+        }
+    },
+    "notification": {
+        "http": {
+            "url": "http://quantumleap:8668/v2/notify"
+        },
+        "attrs": [],
+        "metadata": [
+            "dateCreated",
+            "dateModified",
+            "TimeInstant",
+            "timestamp"
+        ]
+    }
+}
+EOF
+```
+
+To fetch the 5 latest entries for all attributes for a selected entity with id `<entity_id>`:
+
+```bash
+curl --silent --show-error --location \
+    --request GET \
+    --header "fiware-service: <fiware-service>" \
+    --header "fiware-servicepath: <fiware-servicepath>" \
+    --header "apikey: <token>" \
+    "https://<host>/quantumleap/v2/entities/<entity_id>?type=<entity_type>&lastN=5" \
+| json_pp
+```
+
+To fetch the hourly average values for attribute `<attribute_name>` for a selected entity for the 1st June, 2020:
+
+```bash
+curl --silent --show-error --location \
+    --request GET \
+    --header "fiware-service: <fiware-service>" \
+    --header "fiware-servicepath: <fiware-servicepath>" \
+    --header "apikey: <token>" \
+    "https://<host>/quantumleap/v2/entities/<entity_id>\
+?type=<entity_type>\
+&attrs=<attribute_name>\
+&aggrMethod=avg\
+&aggrPeriod=hour\
+&fromDate=2020-06-01T00:00:00Z\
+&toDate=2020-06-01T23:59:59Z" \
+| json_pp
+```
+
+To fetch the daily maximum values for attribute `<attribute_name>` for all entities of type `<entity_type>` within the month of May 2020:
+
+```bash
+curl --silent --show-error --location \
+    --request GET \
+    --header "fiware-service: <fiware-service>" \
+    --header "fiware-servicepath: <fiware-servicepath>" \
+    --header "apikey: <token>" \
+    "https://<host>/quantumleap/v2/types/<entity_type>/attrs/<attribute_name>\
+?aggrMethod=max\
+&aggrPeriod=day\
+&fromDate=2020-05-01T00:00:00Z\
+&toDate=2020-05-31T23:59:59Z" \
+| json_pp
+```
 
 ### IoT Agent for the Ultralight 2.0
 
 ### Grafana, Wirecloud, and CKAN
+
+Grafana, Wirecloud, and CKAN are web applications that can be used with FIWARE data. The starting pages and the main documentation pages for the applications are:
+
+- Grafana
+  - `http://<host>/grafana/`
+  - [QuantumLeap instructions for Grafana](https://quantumleap.readthedocs.io/en/latest/admin/grafana/)
+  - [Grafana documentation](https://grafana.com/docs/grafana/latest/getting-started/getting-started/)
+- Wirecloud
+  - `http://<host>/wirecloud/`
+  - [Wirecloud User Guide](https://wirecloud.readthedocs.io/en/stable/user_guide/)
+- CKAN
+  - `http://<host>/ckan/`
+  - [CKAN User Guide](https://docs.ckan.org/en/2.8/user-guide.html)
+
+The admin user accounts for each application are created as part of the deployment process when following the [Deployment instructions](#deployment-instructions). For each application there is an admin interface that can be used to create additional user accounts to the application.
+
+Grafana can be used to connect directly to the database used by QuantumLeap. See appendix A on the [Report on FIWARE Platform](https://drive.google.com/file/d/1yueGrdArlFmz8ZzchTXWuhbgC9dKUuGN) for some notes about the use of Grafana with QuantumLeap.
 
 ## Platform management
 
